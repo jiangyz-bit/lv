@@ -31,7 +31,6 @@ Windows 桌面悬浮持仓陪伴宠物，重点看持仓逻辑是否还在、风
 ## 运行
 
 ```powershell
-cd C:\Users\TUF_983\Documents\Codex\2026-06-21\fen\position-pet
 npm install
 npm run dev
 ```
