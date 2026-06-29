@@ -10,7 +10,7 @@ Medium-term individual investor using a quiet Windows desktop companion to keep 
 
 ## Product Purpose
 
-Position Logic Pet helps the user observe Hunan Gold, China Tungsten, related commodity signals, announcements, margin heat, and portfolio concentration through fixed observation formulas. It explains whether the holding thesis still looks intact, why a reminder appears now, and which variables deserve review. It does not predict next-day price moves or give mechanical buy/sell instructions.
+Position Logic Pet helps the user observe configurable holdings, related price signals, announcements, margin heat, and portfolio concentration through fixed observation formulas. It explains whether the holding thesis still looks intact, why a reminder appears now, and which variables deserve review. It does not predict next-day price moves or give mechanical buy/sell instructions.
 
 ## Brand Personality
 

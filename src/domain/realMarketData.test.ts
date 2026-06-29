@@ -1,22 +1,21 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildEastmoneyQuoteUrl, eastmoneySecidForCode, mergeRealQuotesIntoSnapshot } from "./realMarketData";
 import { buildManualSnapshot } from "./dataProviders";
+import { buildEastmoneyQuoteUrl, eastmoneySecidForCode, mergeRealQuotesIntoSnapshot } from "./realMarketData";
 import type { Holding, RealQuotePoint } from "./types";
 
 const holding: Holding = {
-  id: "hunan-gold",
-  name: "湖南黄金",
-  code: "002155",
-  positionRatio: 59,
+  id: "chip-etf",
+  name: "芯片ETF",
+  code: "159995",
+  positionRatio: 1,
   costNote: "观察仓",
-  thesis: "黄金避险 + 锑资源稀缺 + 重组预期",
-  horizon: "中线"
+  thesis: "半导体景气度 + 国产替代 + 组合分散观察位",
+  horizon: "观察"
 };
 
 test("eastmoney secid matches common A-share and ETF markets", () => {
-  assert.equal(eastmoneySecidForCode("002155"), "0.002155");
-  assert.equal(eastmoneySecidForCode("000657"), "0.000657");
+  assert.equal(eastmoneySecidForCode("000001"), "0.000001");
   assert.equal(eastmoneySecidForCode("159995"), "0.159995");
   assert.equal(eastmoneySecidForCode("600519"), "1.600519");
   assert.equal(eastmoneySecidForCode("688981"), "1.688981");
@@ -24,19 +23,19 @@ test("eastmoney secid matches common A-share and ETF markets", () => {
 });
 
 test("eastmoney quote url keeps only valid stock codes", () => {
-  const url = buildEastmoneyQuoteUrl(["002155", "", "bad-code", "600519"]);
+  const url = buildEastmoneyQuoteUrl(["000001", "", "bad-code", "600519"]);
 
-  assert.match(url, /secids=0\.002155%2C1\.600519/);
+  assert.match(url, /secids=0\.000001%2C1\.600519/);
   assert.doesNotMatch(url, /bad-code/);
 });
 
 test("real quotes update snapshot values and provider status", () => {
   const snapshot = buildManualSnapshot({}, new Date("2026-06-26T10:00:00+08:00"), [holding]);
   const quote: RealQuotePoint = {
-    code: "002155",
-    name: "湖南黄金",
-    price: 24.24,
-    changePct: -5.5,
+    code: "159995",
+    name: "芯片ETF华夏",
+    price: 3.127,
+    changePct: -1.51,
     turnoverRate: 3.72,
     updatedAt: "2026-06-26T10:01:00+08:00"
   };
@@ -45,7 +44,7 @@ test("real quotes update snapshot values and provider status", () => {
 
   assert.equal(merged.source, "real");
   assert.equal(merged.stale, false);
-  assert.equal(merged.quotes["hunan-gold"].price, 24.24);
-  assert.equal(merged.quotes["hunan-gold"].name, "湖南黄金");
+  assert.equal(merged.quotes["chip-etf"].price, 3.127);
+  assert.equal(merged.quotes["chip-etf"].name, "芯片ETF华夏");
   assert.equal(merged.providerStatus?.find((status) => status.id === "quote")?.status, "ok");
 });
