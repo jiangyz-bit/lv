@@ -23,6 +23,21 @@ test("default project data does not include removed legacy holdings", async () =
   assert.equal(snapshot.announcements.some((item) => removedIds.has(item.stockId)), false);
 });
 
+test("project starts without any default stock holdings", async () => {
+  assert.deepEqual(holdings, []);
+
+  const snapshot = await createMockMarketDataProvider("cooling").getSnapshot();
+  assert.deepEqual(Object.keys(snapshot.quotes), []);
+  assert.deepEqual(Object.keys(snapshot.marginHeat), []);
+});
+
+test("local catalog does not provide built-in stock metadata", () => {
+  const metadata = resolveStockMetadata("123456");
+
+  assert.equal(metadata.name, "123456观察位");
+  assert.match(metadata.thesis, /等待真实数据接口/);
+});
+
 test("removed stock codes no longer resolve to built-in catalog metadata", () => {
   assert.notEqual(resolveStockMetadata(["002", "155"].join("")).name, ["\u6e56\u5357", "\u9ec4\u91d1"].join(""));
   assert.notEqual(resolveStockMetadata(["000", "657"].join("")).name, ["\u4e2d\u94a8", "\u9ad8\u65b0"].join(""));

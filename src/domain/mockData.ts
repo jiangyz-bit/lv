@@ -1,16 +1,6 @@
 import type { Holding, PetAlert, Scenario, Signal, StockId, UserPreferences } from "./types";
 
-export const holdings: Holding[] = [
-  {
-    id: "chip-etf",
-    name: "芯片ETF",
-    code: "159995",
-    positionRatio: 1,
-    costNote: "小仓位观察",
-    thesis: "半导体景气度 + 国产替代 + 组合分散观察位",
-    horizon: "观察"
-  }
-];
+export const holdings: Holding[] = [];
 
 export const baseSignals: Record<StockId, Signal[]> = {};
 

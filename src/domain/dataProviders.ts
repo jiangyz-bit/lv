@@ -1,4 +1,4 @@
-import { holdings as defaultHoldings } from "./mockData";
+import { holdings as initialHoldings } from "./mockData";
 import { getBrowserMarketDataClient, mergeRealQuotesIntoSnapshot, type RealMarketDataClient } from "./realMarketData";
 import type { DataProviderMode, Holding, ManualDataInput, MarketSnapshot, MarginHeatPoint, QuotePoint, Scenario, SnapshotProviderStatus, StockId } from "./types";
 
@@ -10,7 +10,7 @@ export interface MarketDataProvider {
 
 type CommoditySnapshot = MarketSnapshot["commodities"];
 
-export function createMockMarketDataProvider(scenarioId = "cooling", portfolioHoldings: Holding[] = defaultHoldings): MarketDataProvider {
+export function createMockMarketDataProvider(scenarioId = "cooling", portfolioHoldings: Holding[] = initialHoldings): MarketDataProvider {
   return {
     id: "mock",
     label: "本地模拟数据",
@@ -18,7 +18,7 @@ export function createMockMarketDataProvider(scenarioId = "cooling", portfolioHo
   };
 }
 
-export function createManualMarketDataProvider(input: ManualDataInput, portfolioHoldings: Holding[] = defaultHoldings): MarketDataProvider {
+export function createManualMarketDataProvider(input: ManualDataInput, portfolioHoldings: Holding[] = initialHoldings): MarketDataProvider {
   return {
     id: "manual",
     label: "手动录入数据",
@@ -27,7 +27,7 @@ export function createManualMarketDataProvider(input: ManualDataInput, portfolio
 }
 
 export function createRealMarketDataProvider(
-  portfolioHoldings: Holding[] = defaultHoldings,
+  portfolioHoldings: Holding[] = initialHoldings,
   cachedSnapshot?: MarketSnapshot,
   client: RealMarketDataClient | undefined = getBrowserMarketDataClient()
 ): MarketDataProvider {
@@ -38,7 +38,7 @@ export function createRealMarketDataProvider(
   };
 }
 
-export function buildManualSnapshot(input: ManualDataInput, now = new Date(), portfolioHoldings: Holding[] = defaultHoldings): MarketSnapshot {
+export function buildManualSnapshot(input: ManualDataInput, now = new Date(), portfolioHoldings: Holding[] = initialHoldings): MarketSnapshot {
   const timestamp = now.toISOString();
   const base = mockSnapshotForScenario("cooling", now, portfolioHoldings);
   const ids = configuredStockIds(portfolioHoldings, input);
@@ -87,7 +87,7 @@ export async function loadSnapshot(
   mode: DataProviderMode,
   scenario: Scenario,
   manualInput: ManualDataInput,
-  portfolioHoldings: Holding[] = defaultHoldings,
+  portfolioHoldings: Holding[] = initialHoldings,
   cachedSnapshot?: MarketSnapshot,
   realClient?: RealMarketDataClient
 ): Promise<MarketSnapshot> {
@@ -103,7 +103,7 @@ export async function loadSnapshot(
   return mergeSnapshots(mock, manual);
 }
 
-function mockSnapshotForScenario(scenarioId: string, now = new Date(), portfolioHoldings: Holding[] = defaultHoldings): MarketSnapshot {
+function mockSnapshotForScenario(scenarioId: string, now = new Date(), portfolioHoldings: Holding[] = initialHoldings): MarketSnapshot {
   const updatedAt = now.toISOString();
   const common = {
     source: "mock" as const,
@@ -266,9 +266,9 @@ function providerStatus(id: string, label: string, status: SnapshotProviderStatu
 }
 
 export const emptyManualInput: ManualDataInput = {
-  quotes: Object.fromEntries(defaultHoldings.map((holding) => [holding.id, {}])) as ManualDataInput["quotes"],
+  quotes: Object.fromEntries(initialHoldings.map((holding) => [holding.id, {}])) as ManualDataInput["quotes"],
   commodities: {},
-  marginHeat: Object.fromEntries(defaultHoldings.map((holding) => [holding.id, {}])) as ManualDataInput["marginHeat"],
+  marginHeat: Object.fromEntries(initialHoldings.map((holding) => [holding.id, {}])) as ManualDataInput["marginHeat"],
   announcements: [],
   news: []
 };

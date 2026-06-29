@@ -4,10 +4,21 @@ import { createMockMarketDataProvider } from "./dataProviders";
 import { buildEventAlerts } from "./alertEngine";
 import { buildProfilesFromSnapshot } from "./scoring";
 import { defaultPreferences } from "./mockData";
+import type { Holding } from "./types";
+
+const userHolding: Holding = {
+  id: "user-holding-alert",
+  name: "用户持仓提醒测试",
+  code: "123456",
+  positionRatio: 40,
+  costNote: "用户添加",
+  thesis: "用户自定义观察逻辑",
+  horizon: "中线"
+};
 
 test("event alerts include why-now context and respect cooldown", async () => {
-  const snapshot = await createMockMarketDataProvider("red-risk").getSnapshot();
-  const profiles = buildProfilesFromSnapshot(snapshot);
+  const snapshot = await createMockMarketDataProvider("red-risk", [userHolding]).getSnapshot();
+  const profiles = buildProfilesFromSnapshot(snapshot, [userHolding]);
   const first = buildEventAlerts({
     profiles,
     snapshot,
@@ -31,8 +42,8 @@ test("event alerts include why-now context and respect cooldown", async () => {
 });
 
 test("too-frequent feedback lowers non-strong alert volume", async () => {
-  const snapshot = await createMockMarketDataProvider("cooling").getSnapshot();
-  const profiles = buildProfilesFromSnapshot(snapshot);
+  const snapshot = await createMockMarketDataProvider("cooling", [userHolding]).getSnapshot();
+  const profiles = buildProfilesFromSnapshot(snapshot, [userHolding]);
   const preferences = {
     ...defaultPreferences,
     feedbackCounts: { ...defaultPreferences.feedbackCounts, tooFrequent: 3 }

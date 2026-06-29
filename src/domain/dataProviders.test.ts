@@ -5,19 +5,19 @@ import { buildProfilesFromSnapshot } from "./scoring";
 import type { Holding, Scenario } from "./types";
 
 const customHolding: Holding = {
-  id: "chip-etf",
-  name: "芯片ETF",
-  code: "159995",
+  id: "user-holding-a",
+  name: "用户持仓A",
+  code: "123456",
   positionRatio: 1,
-  costNote: "小仓位观察",
-  thesis: "用于分散组合的观察仓",
+  costNote: "用户添加",
+  thesis: "用户自定义观察逻辑",
   horizon: "观察"
 };
 
 const concentratedHolding: Holding = {
   id: "core-observer",
   name: "核心观察位",
-  code: "512760",
+  code: "654321",
   positionRatio: 45,
   costNote: "测试仓位",
   thesis: "通用观察公式测试",
@@ -37,7 +37,7 @@ test("manual snapshot overrides provider values and keeps source metadata", asyn
   const manualSnapshot = buildManualSnapshot(
     {
       quotes: {
-        "chip-etf": { changePct: -4.2, turnoverRate: 7.1 }
+        "user-holding-a": { changePct: -4.2, turnoverRate: 7.1 }
       },
       commodities: {
         minorMetals: { trend: "down", changePct: -3.1 }
@@ -50,17 +50,17 @@ test("manual snapshot overrides provider values and keeps source metadata", asyn
   const snapshot = mergeSnapshots(providerSnapshot, manualSnapshot);
 
   assert.equal(snapshot.source, "mock+manual");
-  assert.equal(snapshot.quotes["chip-etf"].changePct, -4.2);
+  assert.equal(snapshot.quotes["user-holding-a"].changePct, -4.2);
   assert.equal(snapshot.commodities.minorMetals.source, "manual");
 });
 
 test("snapshot values turn into generic holding-logic signal statuses", async () => {
   const provider = createMockMarketDataProvider("red-risk", [customHolding]);
   const profiles = buildProfilesFromSnapshot(await provider.getSnapshot(), [customHolding]);
-  const chip = profiles.find((profile) => profile.holding.id === "chip-etf");
+  const profile = profiles.find((item) => item.holding.id === "user-holding-a");
 
-  assert.equal(chip?.signals.find((signal) => signal.id === "price-action")?.status, "red");
-  assert.equal(chip?.signals.find((signal) => signal.id === "liquidity")?.status, "red");
+  assert.equal(profile?.signals.find((signal) => signal.id === "price-action")?.status, "red");
+  assert.equal(profile?.signals.find((signal) => signal.id === "liquidity")?.status, "red");
 });
 
 test("manual announcements affect generic observation signals", () => {
@@ -68,8 +68,8 @@ test("manual announcements affect generic observation signals", () => {
     {
       announcements: [
         {
-          id: "manual-chip-etf",
-          stockId: "chip-etf",
+          id: "manual-user-holding-a",
+          stockId: "user-holding-a",
           title: "手动：变量需要复核",
           tone: "negative",
           source: "manual",
@@ -82,37 +82,37 @@ test("manual announcements affect generic observation signals", () => {
   );
 
   const profiles = buildProfilesFromSnapshot(snapshot, [customHolding]);
-  const chip = profiles.find((profile) => profile.holding.id === "chip-etf");
+  const profile = profiles.find((item) => item.holding.id === "user-holding-a");
 
-  assert.equal(chip?.signals.find((signal) => signal.id === "announcement")?.status, "red");
+  assert.equal(profile?.signals.find((signal) => signal.id === "announcement")?.status, "red");
 });
 
 test("manual snapshot includes every configured holding", () => {
   const snapshot = buildManualSnapshot(
     {
       quotes: {
-        "chip-etf": { changePct: -1.2, turnoverRate: 2.4 }
+        "user-holding-a": { changePct: -1.2, turnoverRate: 2.4 }
       },
       marginHeat: {
-        "chip-etf": { heat: "cool" }
+        "user-holding-a": { heat: "cool" }
       }
     },
     new Date("2026-06-26T10:00:00+08:00"),
     [customHolding]
   );
 
-  assert.equal(snapshot.quotes["chip-etf"].changePct, -1.2);
-  assert.equal(snapshot.marginHeat["chip-etf"].heat, "cool");
+  assert.equal(snapshot.quotes["user-holding-a"].changePct, -1.2);
+  assert.equal(snapshot.marginHeat["user-holding-a"].heat, "cool");
 });
 
 test("custom holdings receive generic observation signals", () => {
   const snapshot = buildManualSnapshot(
     {
       quotes: {
-        "chip-etf": { changePct: -2.6, turnoverRate: 7.3 }
+        "user-holding-a": { changePct: -2.6, turnoverRate: 7.3 }
       },
       marginHeat: {
-        "chip-etf": { heat: "normal" }
+        "user-holding-a": { heat: "normal" }
       }
     },
     new Date("2026-06-26T10:00:00+08:00"),
@@ -120,11 +120,11 @@ test("custom holdings receive generic observation signals", () => {
   );
 
   const profiles = buildProfilesFromSnapshot(snapshot, [customHolding]);
-  const chip = profiles.find((profile) => profile.holding.id === "chip-etf");
+  const profile = profiles.find((item) => item.holding.id === "user-holding-a");
 
-  assert.equal(chip?.holding.name, "芯片ETF");
-  assert.equal(chip?.signals.find((signal) => signal.id === "price-action")?.status, "yellow");
-  assert.ok(chip?.nextWatch.some((item) => item.includes("芯片ETF")));
+  assert.equal(profile?.holding.name, "用户持仓A");
+  assert.equal(profile?.signals.find((signal) => signal.id === "price-action")?.status, "yellow");
+  assert.ok(profile?.nextWatch.some((item) => item.includes("用户持仓A")));
 });
 
 test("concentrated holdings receive portfolio-fit red signal", () => {
@@ -139,7 +139,7 @@ test("real data mode reports unavailable providers and falls back to cached data
   const cached = buildManualSnapshot(
     {
       quotes: {
-        "chip-etf": { changePct: 0.8, turnoverRate: 1.9 }
+        "user-holding-a": { changePct: 0.8, turnoverRate: 1.9 }
       }
     },
     new Date("2026-06-26T10:00:00+08:00"),
@@ -148,7 +148,7 @@ test("real data mode reports unavailable providers and falls back to cached data
 
   const snapshot = await loadSnapshot("real", testScenario, {}, [customHolding], cached);
 
-  assert.equal(snapshot.quotes["chip-etf"].changePct, 0.8);
+  assert.equal(snapshot.quotes["user-holding-a"].changePct, 0.8);
   assert.equal(snapshot.stale, true);
   assert.equal(snapshot.providerStatus?.some((status) => status.status === "disabled"), true);
 });
@@ -157,8 +157,8 @@ test("real data mode uses configured quote client when available", async () => {
   const snapshot = await loadSnapshot("real", testScenario, {}, [customHolding], undefined, {
     fetchQuotes: async () => [
       {
-        code: "159995",
-        name: "芯片ETF华夏",
+        code: "123456",
+        name: "测试实时名称",
         price: 3.127,
         changePct: -1.51,
         turnoverRate: 7.6,
@@ -169,6 +169,6 @@ test("real data mode uses configured quote client when available", async () => {
 
   assert.equal(snapshot.source, "real");
   assert.equal(snapshot.stale, false);
-  assert.equal(snapshot.quotes["chip-etf"].price, 3.127);
-  assert.equal(snapshot.quotes["chip-etf"].name, "芯片ETF华夏");
+  assert.equal(snapshot.quotes["user-holding-a"].price, 3.127);
+  assert.equal(snapshot.quotes["user-holding-a"].name, "测试实时名称");
 });

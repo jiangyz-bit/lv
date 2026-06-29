@@ -139,8 +139,7 @@ export default function SettingsPanel({
                 <strong>{holding.name}</strong>
                 <button
                   className="icon-button danger"
-                  title={holdings.length > 1 ? "删除股票" : "至少保留一只股票"}
-                  disabled={holdings.length <= 1}
+                  title="删除股票"
                   onClick={() => deleteHolding(holding.id)}
                 >
                   <Trash2 size={15} />
@@ -148,7 +147,7 @@ export default function SettingsPanel({
               </div>
               <label>
                 代码
-                <input value={holding.code} placeholder="例如 159995" onChange={(event) => updateCode(holding.id, event.target.value)} />
+                <input value={holding.code} placeholder="输入股票代码" onChange={(event) => updateCode(holding.id, event.target.value)} />
               </label>
               <label>
                 仓位%
@@ -222,7 +221,6 @@ export default function SettingsPanel({
   }
 
   function deleteHolding(stockId: StockId) {
-    if (holdings.length <= 1) return;
     onHoldingsChange(holdings.filter((holding) => holding.id !== stockId));
   }
 }
