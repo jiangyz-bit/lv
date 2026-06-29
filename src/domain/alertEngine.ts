@@ -76,26 +76,23 @@ function buildPortfolioAlerts(profiles: StockProfile[], snapshot: MarketSnapshot
   const redCount = profiles.filter((profile) => profile.status === "red").length;
   const topHoldings = [...profiles].sort((a, b) => b.holding.positionRatio - a.holding.positionRatio).slice(0, 3);
   const holdingSummary = topHoldings.map((profile) => `${profile.holding.name}约 ${profile.holding.positionRatio}%`).join("，");
-  const bothResourceCooling =
-    snapshot.commodities.gold.trend === "down" &&
-    snapshot.commodities.tungsten.trend === "down" &&
-    snapshot.commodities.minorMetals.trend === "down";
+  const broadCooling = Object.values(snapshot.commodities).filter((item) => item.trend === "down").length >= 2;
 
-  if (concentration >= 85 && (mood === "red" || mood === "yellow" || bothResourceCooling)) {
+  if (concentration >= 85 && (mood === "red" || mood === "yellow" || broadCooling)) {
     alerts.push({
       id: `portfolio-concentration-${dayKey(now)}`,
       eventKey: "portfolio-concentration",
-      title: redCount >= 2 ? "组合红灯：资源线风险共振" : "组合黄灯：资源仓位过于集中",
+      title: redCount >= 2 ? "组合红灯：集中持仓风险共振" : "组合黄灯：仓位过于集中",
       severity: redCount >= 2 ? "strong" : "medium",
-      summary: redCount >= 2 ? "两只资源持仓同时转弱，组合层面需要复核。" : "资源仓位接近满仓，商品和板块同向波动会放大净值起伏。",
-      whyNow: bothResourceCooling ? "金价、钨价和小金属板块同步降温，集中持仓的波动风险升温。" : "持仓集中度偏高，当前风险灯不是单只股票事件。",
+      summary: redCount >= 2 ? "多只主要持仓同时转弱，组合层面需要复核。" : "主要仓位接近满仓，相关变量同向波动会放大净值起伏。",
+      whyNow: broadCooling ? "多个观察变量同步降温，集中持仓的波动风险升温。" : "持仓集中度偏高，当前风险灯不是单只股票事件。",
       reasons: [
         holdingSummary ? `${holdingSummary}，合计仓位约 ${concentration}%` : `持仓合计约 ${concentration}%`,
-        "主要仓位受商品价格、板块情绪、公告和资金热度共同影响",
+        "主要仓位会受到价格波动、公告和资金热度共同影响",
         "用户不适合短线，因此提醒重点是复核逻辑而不是追涨杀跌"
       ],
       interpretation: "这是组合结构提醒，不构成买卖建议。它说明需要检查原本的中线假设是否仍成立，并留意现金缓冲是否足够。",
-      nextWatch: ["商品价格是否继续同向回落", "两融/成交热度是否继续升高", "公司公告是否改变原有持仓逻辑"],
+      nextWatch: ["价格是否继续同向回落", "两融/成交热度是否继续升高", "公告是否改变原有持仓逻辑"],
       createdAt: formatTime(now),
       createdAtMs: now.getTime()
     });
@@ -133,12 +130,7 @@ function passesPreferenceGate(alert: PetAlert, preferences: UserPreferences): bo
   if (preferences.quietMode || preferences.redOnly) return alert.severity === "strong";
   if (preferences.feedbackCounts.tooFrequent >= 3 && alert.severity !== "strong") return false;
   if (preferences.sensitivity === "low") return alert.severity !== "light";
-  if (preferences.sensitivity === "high") return true;
   return true;
-}
-
-function isCoolingDown(alert: PetAlert, history: PetAlert[], preferences: UserPreferences, now: Date): boolean {
-  return cooldownRemainingMinutes(alert, history, preferences, now) > 0;
 }
 
 function cooldownRemainingMinutes(alert: PetAlert, history: PetAlert[], preferences: UserPreferences, now: Date): number {
@@ -170,7 +162,7 @@ function statusAlertTitle(status: StockStatus): string {
 
 function interpretationFor(status: StockStatus): string {
   if (status === "red") return "多个核心变量同时转弱，今天不是普通噪音，需要严肃复核持仓逻辑。";
-  if (status === "overheated") return "产业逻辑未必变坏，但资金太拥挤，短线波动会明显放大。";
+  if (status === "overheated") return "持仓逻辑未必变坏，但资金太拥挤，短线波动会明显放大。";
   if (status === "yellow") return "短期压力升高，但还没有看到中线逻辑被破坏。";
   return "状态稳定，继续观察核心变量即可。";
 }

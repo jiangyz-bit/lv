@@ -148,7 +148,7 @@ export default function SettingsPanel({
               </div>
               <label>
                 代码
-                <input value={holding.code} placeholder="例如 002155" onChange={(event) => updateCode(holding.id, event.target.value)} />
+                <input value={holding.code} placeholder="例如 159995" onChange={(event) => updateCode(holding.id, event.target.value)} />
               </label>
               <label>
                 仓位%

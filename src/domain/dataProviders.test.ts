@@ -10,8 +10,18 @@ const customHolding: Holding = {
   code: "159995",
   positionRatio: 1,
   costNote: "小仓位观察",
-  thesis: "用于分散资源仓位的观察仓",
+  thesis: "用于分散组合的观察仓",
   horizon: "观察"
+};
+
+const concentratedHolding: Holding = {
+  id: "core-observer",
+  name: "核心观察位",
+  code: "512760",
+  positionRatio: 45,
+  costNote: "测试仓位",
+  thesis: "通用观察公式测试",
+  horizon: "中线"
 };
 
 const testScenario: Scenario = {
@@ -22,67 +32,59 @@ const testScenario: Scenario = {
 };
 
 test("manual snapshot overrides provider values and keeps source metadata", async () => {
-  const provider = createMockMarketDataProvider();
+  const provider = createMockMarketDataProvider("cooling", [customHolding]);
   const providerSnapshot = await provider.getSnapshot();
-  const manualSnapshot = buildManualSnapshot({
-    quotes: {
-      "hunan-gold": { changePct: -4.2, turnoverRate: 7.1 }
+  const manualSnapshot = buildManualSnapshot(
+    {
+      quotes: {
+        "chip-etf": { changePct: -4.2, turnoverRate: 7.1 }
+      },
+      commodities: {
+        minorMetals: { trend: "down", changePct: -3.1 }
+      }
     },
-    commodities: {
-      gold: { trend: "down", changePct: -2.4 },
-      antimony: { trend: "down", changePct: -3.1 }
-    }
-  });
+    new Date("2026-06-26T10:00:00+08:00"),
+    [customHolding]
+  );
 
   const snapshot = mergeSnapshots(providerSnapshot, manualSnapshot);
 
   assert.equal(snapshot.source, "mock+manual");
-  assert.equal(snapshot.quotes["hunan-gold"].changePct, -4.2);
-  assert.equal(snapshot.commodities.gold.source, "manual");
+  assert.equal(snapshot.quotes["chip-etf"].changePct, -4.2);
+  assert.equal(snapshot.commodities.minorMetals.source, "manual");
 });
 
-test("snapshot values turn into holding-logic signal statuses", async () => {
-  const provider = createMockMarketDataProvider("red-risk");
-  const profiles = buildProfilesFromSnapshot(await provider.getSnapshot());
-  const hunan = profiles.find((profile) => profile.holding.id === "hunan-gold");
-  const tungsten = profiles.find((profile) => profile.holding.id === "china-tungsten");
+test("snapshot values turn into generic holding-logic signal statuses", async () => {
+  const provider = createMockMarketDataProvider("red-risk", [customHolding]);
+  const profiles = buildProfilesFromSnapshot(await provider.getSnapshot(), [customHolding]);
+  const chip = profiles.find((profile) => profile.holding.id === "chip-etf");
 
-  assert.equal(hunan?.signals.find((signal) => signal.id === "gold")?.status, "red");
-  assert.equal(hunan?.signals.find((signal) => signal.id === "antimony")?.status, "red");
-  assert.equal(tungsten?.signals.find((signal) => signal.id === "crowding")?.status, "red");
+  assert.equal(chip?.signals.find((signal) => signal.id === "price-action")?.status, "red");
+  assert.equal(chip?.signals.find((signal) => signal.id === "liquidity")?.status, "red");
 });
 
-test("manual announcements and portfolio news affect observation signals", () => {
-  const snapshot = buildManualSnapshot({
-    announcements: [
-      {
-        id: "manual-china-tungsten",
-        stockId: "china-tungsten",
-        title: "手动：公司变量需要复核",
-        tone: "negative",
-        source: "manual",
-        publishedAt: "2026-06-26T10:00:00+08:00"
-      }
-    ],
-    news: [
-      {
-        id: "manual-portfolio",
-        relatedTo: "portfolio",
-        title: "手动：资源线情绪降温",
-        tone: "negative",
-        source: "manual",
-        publishedAt: "2026-06-26T10:00:00+08:00"
-      }
-    ]
-  });
+test("manual announcements affect generic observation signals", () => {
+  const snapshot = buildManualSnapshot(
+    {
+      announcements: [
+        {
+          id: "manual-chip-etf",
+          stockId: "chip-etf",
+          title: "手动：变量需要复核",
+          tone: "negative",
+          source: "manual",
+          publishedAt: "2026-06-26T10:00:00+08:00"
+        }
+      ]
+    },
+    new Date("2026-06-26T10:00:00+08:00"),
+    [customHolding]
+  );
 
-  const profiles = buildProfilesFromSnapshot(snapshot);
-  const hunan = profiles.find((profile) => profile.holding.id === "hunan-gold");
-  const tungsten = profiles.find((profile) => profile.holding.id === "china-tungsten");
+  const profiles = buildProfilesFromSnapshot(snapshot, [customHolding]);
+  const chip = profiles.find((profile) => profile.holding.id === "chip-etf");
 
-  assert.equal(hunan?.signals.find((signal) => signal.id === "sector")?.status, "red");
-  assert.equal(tungsten?.signals.find((signal) => signal.id === "earnings")?.status, "red");
-  assert.equal(tungsten?.signals.find((signal) => signal.id === "minor-metals")?.status, "red");
+  assert.equal(chip?.signals.find((signal) => signal.id === "announcement")?.status, "red");
 });
 
 test("manual snapshot includes every configured holding", () => {
@@ -123,6 +125,14 @@ test("custom holdings receive generic observation signals", () => {
   assert.equal(chip?.holding.name, "芯片ETF");
   assert.equal(chip?.signals.find((signal) => signal.id === "price-action")?.status, "yellow");
   assert.ok(chip?.nextWatch.some((item) => item.includes("芯片ETF")));
+});
+
+test("concentrated holdings receive portfolio-fit red signal", () => {
+  const snapshot = buildManualSnapshot({}, new Date("2026-06-26T10:00:00+08:00"), [concentratedHolding]);
+  const profiles = buildProfilesFromSnapshot(snapshot, [concentratedHolding]);
+  const core = profiles.find((profile) => profile.holding.id === "core-observer");
+
+  assert.equal(core?.signals.find((signal) => signal.id === "portfolio-fit")?.status, "red");
 });
 
 test("real data mode reports unavailable providers and falls back to cached data", async () => {
