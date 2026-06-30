@@ -5,7 +5,7 @@ import PortfolioPanel from "./components/PortfolioPanel";
 import SettingsPanel from "./components/SettingsPanel";
 import { buildAlertDiagnostics, buildDisplayedAlerts } from "./domain/alertEngine";
 import { emptyManualInput, loadSnapshot } from "./domain/dataProviders";
-import { defaultPreferences, holdings as defaultHoldings, scenarios } from "./domain/mockData";
+import { defaultPreferences, scenarios } from "./domain/mockData";
 import { buildProfilesFromSnapshot, portfolioMood } from "./domain/scoring";
 import { hydrateHoldingMetadata } from "./domain/stockCatalog";
 import type { DataProviderMode, Holding, MarketSnapshot, PetAlert, StockProfile, UserPreferences } from "./domain/types";
@@ -30,9 +30,9 @@ function loadPreferences(): UserPreferences {
 function loadPortfolioHoldings(): Holding[] {
   try {
     const stored = localStorage.getItem(holdingsKey);
-    return stored ? sanitizeHoldings(JSON.parse(stored)) : defaultHoldings;
+    return stored ? sanitizeHoldings(JSON.parse(stored)) : [];
   } catch {
-    return defaultHoldings;
+    return [];
   }
 }
 
@@ -301,7 +301,7 @@ export default function App() {
 }
 
 function sanitizeHoldings(value: unknown): Holding[] {
-  if (!Array.isArray(value)) return defaultHoldings;
+  if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
   const holdings = value
     .map((item, index) => {
@@ -327,7 +327,7 @@ function sanitizeHoldings(value: unknown): Holding[] {
     })
     .filter(Boolean) as Holding[];
 
-  return holdings.length ? holdings : defaultHoldings;
+  return holdings;
 }
 
 function clampNumber(value: unknown, min: number, max: number): number {

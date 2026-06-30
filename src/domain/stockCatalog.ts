@@ -6,27 +6,14 @@ export interface StockMetadata {
   thesis: string;
 }
 
-const stockCatalog: Record<string, Omit<StockMetadata, "code">> = {
-  "159995": {
-    name: "芯片ETF",
-    thesis: "半导体景气度 + 国产替代 + 组合分散观察位"
-  },
-  "512760": {
-    name: "芯片ETF",
-    thesis: "半导体景气度 + 国产替代 + 组合分散观察位"
-  }
-};
-
 export function resolveStockMetadata(code: string): StockMetadata {
   const normalizedCode = normalizeStockCode(code);
-  const known = stockCatalog[normalizedCode];
-  if (known) return { code: normalizedCode, ...known };
 
   if (!normalizedCode) {
     return {
       code: "",
       name: "待填写代码",
-      thesis: "输入股票代码后，将由真实数据或本地目录自动补全名称和观察逻辑。"
+      thesis: "输入股票代码后，可由真实数据接口或智能识别补全名称和观察逻辑。"
     };
   }
 
